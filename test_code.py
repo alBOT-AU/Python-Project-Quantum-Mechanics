@@ -1,2 +1,1 @@
-for i in range(10):
-  print(i)
+x_lattice = np.linspace(-15, 15, 200)
