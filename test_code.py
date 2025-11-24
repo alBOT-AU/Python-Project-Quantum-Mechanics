@@ -13,7 +13,8 @@ delta_x_lattice = (x_lattice[-1] - x_lattice[0]) / len(x_lattice)
 
 def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
     """
-    Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal, super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
+    Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal, 
+    super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
 
     parameters:
         matrix_length: length of the matrix
