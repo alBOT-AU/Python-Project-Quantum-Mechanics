@@ -6,21 +6,32 @@ import scipy.linalg
 x_lattice = np.linspace(-15, 15, 200)
 
 # Konstruer T
-T_matrix = np.zeros((3, 200))  # 3 for diagonalerne, 200 for størrelsen af matricen
 
-T_sub_diag = np.zeros((1, 199)) + 1 
-T_super_diag = np.zeros((1, 199)) + 1  
-T_diag = np.zeros((1, 200)) - 2  
-
-T_matrix[0,1:] = T_sub_diag  # Super diag har ikke noget i første kolonne 
-T_matrix[1,:] = T_diag
-T_matrix[2,:-1] = T_super_diag  # Sub diag har ikke noget i sidste kolonne 
-
-mass_electron = 1 # Definerer enhedsløst
+mass_electron = 1
 delta_x_lattice = (x_lattice[-1] - x_lattice[0]) / len(x_lattice)
-T_factor = -1 / (2*mass_electron*delta_x_lattice**2)
 
-T = T_factor * T_matrix
+
+def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
+    """
+    Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal, super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
+
+    parameters:
+        matrix_length: length of the matrix
+    """
+    T_matrix = np.zeros((3, 200))
+
+    T_sub_diag = np.zeros((1,matrix_length - 1)) + 1
+    T_super_diag = np.zeros((1,matrix_length - 1)) + 1
+    T_diag = np.zeros((1,matrix_length)) -2
+
+    T_matrix[0,1:] = T_sub_diag
+    T_matrix[1,:] = T_diag
+    T_matrix[2,:-1] = T_super_diag
+
+    T_factor = 1 / (2*mass*delta_x**2)
+
+    T = T_factor * T_matrix
+    return T
 
 # Konstruer V
 def V_factor(x, omega):
@@ -33,7 +44,7 @@ V =  np.zeros((3, 200))
 V[1,:] = V_diag
 
 # Konstruer H
-H = T + V
+H = construct_T(200, delta_x_lattice, mass_electron) + V
 
 ---------------------------------------------------------------------------
 # Eigenvalues and Eigenvectors
