@@ -62,4 +62,8 @@ H = construct_T(200, delta_x_lattice, mass_electron) + V
 # Eigenvalues and Eigenvectors
 eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])  # Skal kun have diagonal + superdiagonal 
 
-
+def plot_normalized_eigenfunction(eigenvectors: np.ndarray, x_lattice: np.ndarray)->None:
+    fig, ax = plt.subplots(10, 1)
+    for i, axes in enumerate(ax):
+        normalizing_factor = (scipy.integrate.simpson(abs(eigenvectors[i])**2, x_lattice))
+        axes.plot(x_lattice, abs(eigenvectors[i])**2*normalizing_factor)
