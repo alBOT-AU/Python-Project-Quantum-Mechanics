@@ -39,7 +39,14 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
     return T
 
 # Konstruer V
-def V_factor(x, omega):
+def V_factor(x, omega: float) -> float:
+    """
+    Calculates the V-factor for the simple harmonic oscillator.
+
+    parameters:
+        x: the x-values to calculate the V-factor for
+        omega: value for the angular frequency
+    """
   omega_square = omega**2
   x_square = x**2
   return omega_square * x_square / 2
