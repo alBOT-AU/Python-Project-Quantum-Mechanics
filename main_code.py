@@ -89,8 +89,18 @@ def crank_nicholson_matrix(matrix_length: int, delta_t: float, n: int = 0) -> np
 
 psis = [eigvecs[0]]
 
-for i in range(10):
-    right_vector = banded_mv(crank_nicholson_matrix(200, 0.01, 1), psis[-1])
-    left_matrix = crank_nicholson_matrix(200, 0.01)
+for i in range(10000):
+    right_vector = banded_mv(crank_nicholson_matrix(points, dt, 1), psis[-1])
+    left_matrix = crank_nicholson_matrix(points, dt)
     new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
     psis.append(new_psi)
+
+psis = np.array(psis)
+
+def plot_normalized_eigenfunction(psis: np.ndarray, x_lattice: np.ndarray)->None:
+    fig, ax = plt.subplots(10, 1)
+    for i, axes in enumerate(ax):
+        normalizing_factor = (scipy.integrate.simpson(abs(psis[i*1000])**2, x_lattice))
+        axes.plot(x_lattice, abs(psis[i*1000])**2*normalizing_factor)
+
+plot_normalized_eigenfunction(psis, x_lattice)
