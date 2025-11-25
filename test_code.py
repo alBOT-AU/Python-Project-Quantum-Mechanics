@@ -20,6 +20,8 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
 
     parameters:
         matrix_length: length of the matrix
+        delta_x: length between x-values
+        mass: mass of the particle
     """
     T_matrix = np.zeros((3, 200))
 
