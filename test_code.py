@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
 import scipy.integrate
------------------------------------------
+#-----------------------------------------
 
 # Gitter
 x_lattice = np.linspace(-15, 15, 200)
@@ -13,7 +13,7 @@ mass_electron = 1
 delta_x_lattice = (x_lattice[-1] - x_lattice[0]) / len(x_lattice)
 
 
-def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
+def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     """
     Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal, 
     super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
@@ -39,7 +39,7 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> float:
     return T
 
 # Konstruer V
-def V_factor(x, omega: float) -> float:
+def V_factor(x: np.ndarray, omega: float) -> float:
     """
     Calculates the V-factor for the simple harmonic oscillator.
 
@@ -58,7 +58,7 @@ V[1,:] = V_diag
 # Konstruer H
 H = construct_T(200, delta_x_lattice, mass_electron) + V
 
----------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 # Eigenvalues and Eigenvectors
 eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])  # Skal kun have diagonal + superdiagonal 
 
