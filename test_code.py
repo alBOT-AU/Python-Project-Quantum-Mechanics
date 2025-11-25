@@ -39,7 +39,7 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     return T
 
 # Konstruer V
-def V_factor(x: np.ndarray, omega: float) -> float:
+def V_factor(x: np.ndarray, omega: float) -> np.ndarray:
     """
     Calculates the V-factor for the simple harmonic oscillator.
 
