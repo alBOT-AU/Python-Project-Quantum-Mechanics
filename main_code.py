@@ -115,5 +115,6 @@ def plot_normalized_eigenfunction(psis: np.ndarray, x_lattice: np.ndarray)->None
     for i, axes in enumerate(ax):
         normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, i])**2, x_lattice))
         axes.plot(x_lattice, abs(eigvecs[:, i])**2*normalizing_factor)
+        axes.plot(x_lattice, potential(x_lattice, 2, 10, 5), color = "C1")
 
 plot_normalized_eigenfunction(psis, x_lattice)
