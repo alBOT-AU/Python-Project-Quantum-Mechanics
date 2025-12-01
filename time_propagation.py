@@ -83,6 +83,13 @@ def crank_nicholson_matrix(matrix_length: int, x, delta_t, t: float, n: int = 0)
     second_term[1,:] += 1
     return second_term
 
+def construct_wave(position, variance, central_speed, center_position):
+    factor_1 = 1 / (2*np.pi*variance)**(1/4)
+    factor_2 = np.exp(-(position - center_position)**2 / (4 * variance))
+    factor_3 = np.exp(1j * position * central_speed)
+    wave = factor_1 * factor_2 * factor_3
+    return wave
+
 spread = 5
 variance = spread ** 2
 center_speed = np.sqrt(8)
