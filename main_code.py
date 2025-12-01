@@ -96,6 +96,20 @@ for i in range(10000):
 
 psis = np.array(psis)
 
+def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 1, x_0: float = 0) -> np.ndarray:
+    """
+    Calculates the potential in form of a slim Gauss for a wave to collide with.
+
+    paramenters:
+        x: the values of which the potential is calculated
+        V_0: the initial value of the potential
+        standard_deviation: how much the function deviates
+        x_0: displacement of the top point along the x-axis in the positive direction
+    """
+    if standard_deviation == 0:
+        raise Exception("The standard deviation cannot be 0")
+    return V_0 * np.exp(-1 * ((x - x_0)**2) / 4 * standard_deviation**2)
+
 def plot_normalized_eigenfunction(psis: np.ndarray, x_lattice: np.ndarray)->None:
     fig, ax = plt.subplots(10, 1)
     for i, axes in enumerate(ax):
