@@ -3,10 +3,6 @@ import scipy.linalg
 import matplotlib.pyplot as plt
 import scipy.integrate
 #-----------------------------------------
-### Egenværdier og egenvektorer for et kvantesystem
-
-points = 200
-x_lattice = np.linspace(-15, 15, points)
 t_grid = np.linspace(0, 100, 100)
 
 mass_electron = 1
@@ -36,19 +32,6 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
 
     T = T_factor * T_matrix
     return T
-
-# Konstruer H
-H = construct_T(points, delta_x_lattice, mass_electron) + V
-
-#---------------------------------------------------------------------------
-# Eigenvalues and Eigenvectors
-eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])
-
-def plot_normalized_eigenfunction(eigenvectors: np.ndarray, x_lattice: np.ndarray)->None:
-    fig, ax = plt.subplots(10, 1)
-    for i, axes in enumerate(ax):
-        normalizing_factor = (scipy.integrate.simpson(abs(eigenvectors[i])**2, x_lattice))
-        axes.plot(x_lattice, abs(eigenvectors[i])**2*normalizing_factor)
 
 def banded_mv(A, x):
     y = A[1,:] * x
