@@ -96,7 +96,7 @@ for i in range(10000):
 
 psis = np.array(psis)
 
-def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 1, x_0: float = 0) -> np.ndarray:
+def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10, x_0: float = 5) -> np.ndarray:
     """
     Calculates the potential in form of a slim Gauss for a wave to collide with.
 
