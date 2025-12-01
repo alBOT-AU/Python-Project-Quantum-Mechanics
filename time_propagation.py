@@ -56,7 +56,8 @@ def banded_mv(A, x):
     y[1:]  += A[2,:-1] * x[:-1]
     return y
 
-def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10, x_0: float = 0) -> np.ndarray:
+def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10,
+              x_0: float = 0) -> np.ndarray:
     """
     Calculates the potential in form of a slim Gauss for a wave to collide with.
 
