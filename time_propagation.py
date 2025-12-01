@@ -1,22 +1,16 @@
-def banded_mv(A, x):
-    y = A[1,:] * x
-    y[:-1] += A[0,1:] * x[1:]
-    y[1:]  += A[2,:-1] * x[:-1]
-    return y
+import numpy as np
+import scipy.linalg
+import matplotlib.pyplot as plt
+import scipy.integrate
+#-----------------------------------------
+### Egenværdier og egenvektorer for et kvantesystem
 
-def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10, x_0: float = 0) -> np.ndarray:
-    """
-    Calculates the potential in form of a slim Gauss for a wave to collide with.
+points = 200
+x_lattice = np.linspace(-15, 15, points)
+t_grid = np.linspace(0, 100, 100)
 
-    paramenters:
-        x: the values of which the potential is calculated
-        V_0: the initial value of the potential
-        standard_deviation: how much the function deviates
-        x_0: displacement of the top point along the x-axis in the positive direction
-    """
-    if standard_deviation == 0:
-        raise Exception("The standard deviation cannot be 0")
-    return V_0 * np.exp(-1 * ((x - x_0)**2) / 4 * standard_deviation**2)
+mass_electron = 1
+delta_x_lattice = (x_lattice[-1] - x_lattice[0]) / len(x_lattice)
 
 def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     """
@@ -42,6 +36,39 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
 
     T = T_factor * T_matrix
     return T
+
+# Konstruer H
+H = construct_T(points, delta_x_lattice, mass_electron) + V
+
+#---------------------------------------------------------------------------
+# Eigenvalues and Eigenvectors
+eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])  # Skal kun have diagonal + superdiagonal
+
+def plot_normalized_eigenfunction(eigenvectors: np.ndarray, x_lattice: np.ndarray)->None:
+    fig, ax = plt.subplots(10, 1)
+    for i, axes in enumerate(ax):
+        normalizing_factor = (scipy.integrate.simpson(abs(eigenvectors[i])**2, x_lattice))
+        axes.plot(x_lattice, abs(eigenvectors[i])**2*normalizing_factor)
+
+def banded_mv(A, x):
+    y = A[1,:] * x
+    y[:-1] += A[0,1:] * x[1:]
+    y[1:]  += A[2,:-1] * x[:-1]
+    return y
+
+def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10, x_0: float = 0) -> np.ndarray:
+    """
+    Calculates the potential in form of a slim Gauss for a wave to collide with.
+
+    paramenters:
+        x: the values of which the potential is calculated
+        V_0: the initial value of the potential
+        standard_deviation: how much the function deviates
+        x_0: displacement of the top point along the x-axis in the positive direction
+    """
+    if standard_deviation == 0:
+        raise Exception("The standard deviation cannot be 0")
+    return V_0 * np.exp(-1 * ((x - x_0)**2) / 4 * standard_deviation**2)
 
 def crank_nicholson_matrix(matrix_length: int, x, delta_t, t: float, n: int = 0) -> np.ndarray:
     """
