@@ -43,7 +43,7 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
 
 # Konstruer V
 
-def construct_V(x, t, omega):
+def construct_V(x, omega):
     omega_square = omega**2
     x_square = x**2
     V_diag = omega_square * x_square / 2
@@ -52,7 +52,7 @@ def construct_V(x, t, omega):
     return V
 
 # Konstruer H
-H = construct_T(points, delta_x_lattice, mass_electron) + V
+H = construct_T(points, delta_x_lattice, mass_electron) + construct_V(x_lattice, 2)
 
 #---------------------------------------------------------------------------
 # Eigenvalues and Eigenvectors
@@ -74,11 +74,11 @@ def banded_mv(A, x):
     y[1:]  += A[2,:-1] * x[:-1]
     return y
 
-def crank_nicholson_matrix(matrix_length: int, x, delta_t, t: float, n: int = 0) -> np.ndarray:
+def crank_nicholson_matrix(matrix_length: int, x, delta_t, n: int = 0) -> np.ndarray:
     """
 
     """
-    V = construct_V(x_lattice, t, omega)
+    V = construct_V(x_lattice, omega)
     T = construct_T(points, delta_x_lattice, mass_electron)
     H = T + V
     second_term = (-1)**n * ((1j * delta_t) / 2) * H
@@ -96,25 +96,10 @@ for i in range(10000):
 
 psis = np.array(psis)
 
-def potential(x: np.ndarray, V_0: float = 2, standard_deviation: float = 10, x_0: float = 5) -> np.ndarray:
-    """
-    Calculates the potential in form of a slim Gauss for a wave to collide with.
-
-    paramenters:
-        x: the values of which the potential is calculated
-        V_0: the initial value of the potential
-        standard_deviation: how much the function deviates
-        x_0: displacement of the top point along the x-axis in the positive direction
-    """
-    if standard_deviation == 0:
-        raise Exception("The standard deviation cannot be 0")
-    return V_0 * np.exp(-1 * ((x - x_0)**2) / 4 * standard_deviation**2)
-
 def plot_normalized_eigenfunction(psis: np.ndarray, x_lattice: np.ndarray)->None:
     fig, ax = plt.subplots(10, 1)
     for i, axes in enumerate(ax):
         normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, i])**2, x_lattice))
         axes.plot(x_lattice, abs(eigvecs[:, i])**2*normalizing_factor)
-        axes.plot(x_lattice, potential(x_lattice, 2, 10, 5), color = "C1")
 
 plot_normalized_eigenfunction(psis, x_lattice)
