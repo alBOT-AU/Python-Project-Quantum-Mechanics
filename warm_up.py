@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import scipy.integrate
 
 class Eigenvalues_Harmonic_Oscillator():
-    def __init__(self, matrix_length: int = 2000, boundaries: float = 15, angular_frequency: float = 2, mass: float = 1):
+    def __init__(self, matrix_length: int = 2000, boundaries: float = 15, 
+                 angular_frequency: float = 2, mass: float = 1):
         """
         Simulates the harmonic oscillation of a particle
 
