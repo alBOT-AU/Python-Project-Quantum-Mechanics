@@ -21,7 +21,7 @@ class Eigenvalues_Harmonic_Oscillator():
         self.x_lattice = np.linspace(-boundaries, boundaries, self.matrix_length)
         self.delta_x = (self.x_lattice[-1] - self.x_lattice[0]) / self.matrix_length
 
-    def construct_T(self) -> np.ndarray:
+    def construct_double_deriv(self) -> np.ndarray:
         """
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
@@ -41,7 +41,7 @@ class Eigenvalues_Harmonic_Oscillator():
         T = T_factor * T_matrix
         return T
 
-    def construct_V(self):
+    def construct_potential(self):
         """
         Constructs the V matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
@@ -60,9 +60,11 @@ class Eigenvalues_Harmonic_Oscillator():
         parameters:
             n: eigenfunction number
         """
-        H = Eigenvalues_Harmonic_Oscillator.construct_T(self) + Eigenvalues_Harmonic_Oscillator.construct_V(self)
-
-        eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])
+        double_deriv = Eigenvalues_Harmonic_Oscillator.construct_double_deriv(self)
+        potential = Eigenvalues_Harmonic_Oscillator.construct_potential(self)
+        hamiltonian = double_deriv + potential
+        
+        eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(hamiltonian[1,:], hamiltonian[0, 1:])
         normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, n])**2, self.x_lattice))
         return abs(eigvecs[:, n])**2*normalizing_factor
 
