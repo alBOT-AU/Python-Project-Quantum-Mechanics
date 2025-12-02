@@ -40,7 +40,8 @@ def construct_V(x: np.ndarray, omega: float):
     Constructs the V matrix, which consists of a tri-diagonal matrix.
 
     parameters:
-        x: x-values
+        x: x-values to make the matrix over
+        omega: angular frequency of the particle
     """
     omega_square = omega**2
     x_square = x**2
@@ -49,14 +50,24 @@ def construct_V(x: np.ndarray, omega: float):
     V[1,:] = V_diag
     return V
 
-H = construct_T(points, delta_x_lattice, mass_electron) + construct_V(x_lattice, 2)
-
-eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])
-
-def plot_normalized_eigenfunction(x_lattice: np.ndarray)->None:
+def plot_normalized_eigenfunction(x: np.ndarray, matrix_length, delta_x, mass, angular_frequency)->None:
+    """
+    Plots the normalizes functions for the first 10 eigenvalues.
+    
+    parameters:
+        x: x-values to determine the bounds of the plot
+        matrix_length: length of the matrix
+        delta_x: length between x-values
+        mass: mass of the particle
+        angular_frequency: angular frequency of the particle
+    """
+    H = construct_T(matrix_length, delta_x, mass) + construct_V(x, angular_frequency)
+    
+    eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])
+    
     fig, ax = plt.subplots(10, 1)
     for i, axes in enumerate(ax):
-        normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, i])**2, x_lattice))
-        axes.plot(x_lattice, abs(eigvecs[:, i])**2*normalizing_factor)
+        normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, i])**2, x))
+        axes.plot(x, abs(eigvecs[:, i])**2*normalizing_factor)
 
-plot_normalized_eigenfunction(x_lattice)
+plot_normalized_eigenfunction(x_lattice, points, delta_x_lattice, mass_electron, omega)
