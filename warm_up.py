@@ -2,19 +2,13 @@ import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
 import scipy.integrate
-#-----------------------------------------
-### Egenværdier og egenvektorer for et kvantesystem
 
-# Gitter
-points = 200
+points = 2000
 x_lattice = np.linspace(-15, 15, points)
 t_grid = np.linspace(0, 100, 100)
-
-# Konstruer T
-
 mass_electron = 1
 delta_x_lattice = (x_lattice[-1] - x_lattice[0]) / len(x_lattice)
-
+omega = 2
 
 def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     """
@@ -41,9 +35,13 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     T = T_factor * T_matrix
     return T
 
-# Konstruer V
+def construct_V(x: np.ndarray, omega: float):
+    """
+    Constructs the V matrix, which consists of a tri-diagonal matrix.
 
-def construct_V(x, omega):
+    parameters:
+        x: x-values
+    """
     omega_square = omega**2
     x_square = x**2
     V_diag = omega_square * x_square / 2
@@ -51,55 +49,14 @@ def construct_V(x, omega):
     V[1,:] = V_diag
     return V
 
-# Konstruer H
 H = construct_T(points, delta_x_lattice, mass_electron) + construct_V(x_lattice, 2)
 
-#---------------------------------------------------------------------------
-# Eigenvalues and Eigenvectors
-eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])  # Skal kun have diagonal + superdiagonal
+eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(H[1,:], H[0, 1:])
 
-def plot_normalized_eigenfunction(eigenvectors: np.ndarray, x_lattice: np.ndarray)->None:
-    fig, ax = plt.subplots(10, 1)
-    for i, axes in enumerate(ax):
-        normalizing_factor = (scipy.integrate.simpson(abs(eigenvectors[i])**2, x_lattice))
-        axes.plot(x_lattice, abs(eigenvectors[i])**2*normalizing_factor)
-
-
-#---------------------------------------------------------------------------
-### Tidspropagation
-
-def banded_mv(A, x):
-    y = A[1,:] * x
-    y[:-1] += A[0,1:] * x[1:]
-    y[1:]  += A[2,:-1] * x[:-1]
-    return y
-
-def crank_nicholson_matrix(matrix_length: int, x, delta_t, n: int = 0) -> np.ndarray:
-    """
-
-    """
-    V = construct_V(x_lattice, omega)
-    T = construct_T(points, delta_x_lattice, mass_electron)
-    H = T + V
-    second_term = (-1)**n * ((1j * delta_t) / 2) * H
-    second_term[1,:] += 1
-    return second_term
-
-psis = [eigvecs[0]]
-dt = 0.1
-omega = 2
-for i in range(10000):
-    right_vector = banded_mv(crank_nicholson_matrix(points, dt, 0, 1), psis[-1])
-    left_matrix = crank_nicholson_matrix(points, x_lattice, dt, 0)
-    new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
-    psis.append(new_psi)
-
-psis = np.array(psis)
-
-def plot_normalized_eigenfunction(psis: np.ndarray, x_lattice: np.ndarray)->None:
+def plot_normalized_eigenfunction(x_lattice: np.ndarray)->None:
     fig, ax = plt.subplots(10, 1)
     for i, axes in enumerate(ax):
         normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, i])**2, x_lattice))
         axes.plot(x_lattice, abs(eigvecs[:, i])**2*normalizing_factor)
 
-plot_normalized_eigenfunction(psis, x_lattice)
+plot_normalized_eigenfunction(x_lattice)
