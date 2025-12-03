@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.ma as ma
 import scipy.linalg
 import matplotlib.pyplot as plt
 import scipy.integrate
@@ -13,7 +12,7 @@ def banded_mv(A, x):
     y[1:]  += A[2,:-1] * x[:-1]
     return y
 
-def potential(x: np.ndarray, V_0: float = 1e14, standard_deviation: float = 10, x_0: float = 40) -> np.ndarray:
+def potential(x: np.ndarray, V_0: float = 10, standard_deviation: float = 1, x_0: float = 40) -> np.ndarray:
     """
     Calculates the potential in form of a slim Gauss for a wave to collide with.
 
@@ -26,7 +25,7 @@ def potential(x: np.ndarray, V_0: float = 1e14, standard_deviation: float = 10, 
 
     if standard_deviation == 0:
         raise Exception("The standard deviation cannot be 0")
-    return V_0 * np.exp(-1 * ((x - x_0)**2) / 4 * standard_deviation**2)
+    return V_0 * np.exp(-1 * ((x - x_0)**2) / (4 * standard_deviation**2))
 
 def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     """
@@ -48,7 +47,7 @@ def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
     T_matrix[1,:] = T_diag
     T_matrix[2,:-1] = T_super_diag
 
-    T_factor = 1 / (2*mass*delta_x**2)
+    T_factor = - 1 / (2*mass*delta_x**2)
 
     T = T_factor * T_matrix
     return T
@@ -60,7 +59,8 @@ def crank_nicholson_matrix(matrix_length: int, x, delta_t, t: float, n: int = 0)
     delta_x_lattice = x[1] - x[0]
     V = potential(x)
     T = construct_T(len(x), delta_x_lattice, mass_electron)
-    H = T + V
+    H = T
+    H[1,:] += V
     second_term = (-1)**n * ((1j * delta_t) / 2) * H
     second_term[1,:] += 1
     return second_term
@@ -72,31 +72,31 @@ def construct_wave(position, variance, central_speed, center_position):
     wave = factor_1 * factor_2 * factor_3
     return wave
 
-spread = 5
+mass_electron = 1
+points = 3000
+spread = 4
 variance = spread ** 2
-center_speed = -1
+center_speed = np.sqrt(21)
 center_position = 0
-x_lattice = np.linspace(-150, 150, 3000)
-dt = 0.01
+x_lattice = np.linspace(-150, 150, points)
+dt = 0.1
 wave_0 = construct_wave(x_lattice, variance, center_speed, center_position)
 
 #fig, ax = plt.subplots(3, 1)
 #ax[0].plot(abs(construct_wave(x_lattice, variance, center_speed, center_position)**2))
 
 psis = [wave_0]
-for i in range(10000):
-    right_vector = banded_mv(crank_nicholson_matrix(3000, x_lattice, dt, 0, 1), psis[-1])
-    left_matrix = crank_nicholson_matrix(3000, x_lattice, dt, 0)
+for i in range(1000):
+    right_vector = banded_mv(crank_nicholson_matrix(points, x_lattice, dt, 0, 1), psis[-1])
+    left_matrix = crank_nicholson_matrix(points, x_lattice, dt, 0)
     new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
     psis.append(new_psi)
 #ax[1].plot(x_lattice, abs(psis[-1])**2)
 #ax[1].plot(x_lattice, potential(x_lattice)/(max(potential(x_lattice)*20)))
 
-
-
 def ani_func(index):
-    normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index*100])**2, x_lattice))
-    plot_func = normalizing_factor * abs((psis[index*100]))**2
+    normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index*10])**2, x_lattice))
+    plot_func = normalizing_factor * abs((psis[index*10]))**2
     line.set_ydata(plot_func)
     return line,
 
