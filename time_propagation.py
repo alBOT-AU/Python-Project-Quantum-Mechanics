@@ -12,7 +12,7 @@ class ParticleCollision:
             matrix_bounds: float = 150, mass: float = 1, dt: float = 0.1
     ):
         """
-        Simulates a collision between a particle and a barrier, and shows quantum tunneling for 
+        Simulates a collision between a particle and a barrier, and shows quantum tunneling for
         certain energies of the particle and barrier.
 
         parameters:
@@ -37,20 +37,19 @@ class ParticleCollision:
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
         """
-        T_matrix = np.zeros((3, self.matrix_length))
+        kinetic_matrix = np.zeros((3, self.matrix_length))
 
-        T_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
-        T_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
-        T_diag = np.zeros((1, self.matrix_length)) -2
+        kinetic_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        kinetic_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        kinetic_diag = np.zeros((1, self.matrix_length)) -2
 
-        T_matrix[0,1:] = T_sub_diag
-        T_matrix[1,:] = T_diag
-        T_matrix[2,:-1] = T_super_diag
+        kinetic_matrix[0,1:] = kinetic_sub_diag
+        kinetic_matrix[1,:] = kinetic_diag
+        kinetic_matrix[2,:-1] = kinetic_super_diag
 
-        T_factor = - 1 / (2* self.mass * self.delta_x**2)
-
-        T = T_factor * T_matrix
-        return T
+        kinetic_factor = - 1 / (2* self.mass * self.delta_x**2)
+        
+        return kinetic_factor * kinetic_matrix
 
     def crank_nicholson_matrix(self, n) -> np.ndarray:
         """
@@ -59,11 +58,11 @@ class ParticleCollision:
         parameters:
             n: even values (zero included) gives a positive sign, uneven values gives a negative sign
         """
-        V = self.barrier
-        T = ParticleCollision.double_deriv(self)
-        H = T
-        H[1,:] += V
-        second_term = (-1)**n * ((1j * self.dt) / 2) * H
+        potential = self.barrier
+        kinetic = ParticleCollision.double_deriv(self)
+        hamiltonian = kinetic
+        hamiltonian[1,:] += potential.copy()
+        second_term = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
         second_term[1,:] += 1
         return second_term
 
@@ -81,17 +80,18 @@ class ParticleCollision:
             y[1:]  += A[2,:-1] * x[:-1]
             return y
 
-        fig1, ani_ax = plt.subplots(label = "test")
+        fig1, ani_ax = plt.subplots()
         ani_ax.grid()
         ani_ax.set_xlabel("Position")
-        ani_ax.set_ylabel("Energy")
+        ani_ax.set_ylabel("Probability")
         ani_ax.set_title("Normalized wave function and linear relation to barrier")
         psis = [self.wave]
 
         potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
-        ani_ax.plot(self.x_lattice, potential_plot, color="C3")
+        ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
         line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
+        ani_ax.legend()
 
         for i in range(animation_points):
             right_vector = banded_mv(
@@ -148,4 +148,4 @@ def gaussian_wave(
     return wave
 
 specific_collision = ParticleCollision(gaussian_wave, gaussian_potential, dt = 0.1)
-specific_collision.animate_collision(10, 1000)
+specific_collision.animate_collision(5, 1000)
