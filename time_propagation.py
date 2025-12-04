@@ -11,6 +11,17 @@ class Particle_Collision():
             self, wave: type[Callable], barrier: Callable, matrix_length: int = 3000,
             matrix_bounds: float = 150, mass: float = 1, dt: float = 0.1
     ):
+        """
+        Simulates a collision between a particle and a barrier, and shows quantum tunneling for certain energies of the particle and barrier.
+
+        parameters:
+            wave: wave function
+            barrier: barrier function
+            matrix_length: length of the matrix
+            matrix_bounds: bounds of the matrix
+            mass: mass of the particle
+            dt: change in time between steps
+        """
         self.matrix_length = matrix_length
         self.matrix_bounds = matrix_bounds
         self.mass = mass
@@ -24,11 +35,6 @@ class Particle_Collision():
         """
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
-
-        parameters:
-            matrix_length: length of the matrix
-            delta_x: length between x-values
-            mass: mass of the particle
         """
         T_matrix = np.zeros((3, self.matrix_length))
 
@@ -47,7 +53,10 @@ class Particle_Collision():
 
     def crank_nicholson_matrix(self, n) -> np.ndarray:
         """
+        Creates the Crank-Nicholson matrix, a numerical way to solve the Schrödinger equation.
 
+        parameters:
+            n: even values (zero included) gives a positive sign, uneven values gives a negative sign
         """
         V = self.barrier
         T = Particle_Collision.double_deriv(self)
@@ -58,6 +67,13 @@ class Particle_Collision():
         return second_term
 
     def animate_collision(self, frame_space: int = 10, animation_points: int = 1000):
+        """
+        Animates the collision between the particle and the barrier.
+        
+        parameters:
+            frame_space: chooses every n'th point to show in animation, where n is the value assigned
+            animation_points: amount of points to animate
+        """
         def banded_mv(A, x):
             y = A[1,:] * x
             y[:-1] += A[0,1:] * x[1:]
@@ -98,7 +114,7 @@ def gaussian_potential(x_lattice: np.ndarray, height: float = 10, standard_devia
 
         paramenters:
             x_lattice: the values of which the potential is calculated
-            V_0: the initial value of the potential
+            height: height of the potential
             standard_deviation: how much the function deviates
             start_position: displacement of the top point along the x-axis in the positive direction
         """
@@ -107,11 +123,20 @@ def gaussian_potential(x_lattice: np.ndarray, height: float = 10, standard_devia
         return height * np.exp(-1 * ((x_lattice - start_position)**2) / (4 * standard_deviation**2))
 
 def gaussian_wave(x_lattice: np.ndarray, center_position: float = 0, center_velocity: float = 4, variance: float = 2):
-        factor_1 = 1 / (2 * np.pi * variance)**(1/4)
-        factor_2 = np.exp(-(x_lattice - center_position)**2 / (4 * variance))
-        factor_3 = np.exp(1j * x_lattice * center_velocity)
-        wave = factor_1 * factor_2 * factor_3
-        return wave
+    """
+    Creates a wave with the form of a gaussian function.
+    
+    parameters:
+        x_lattice: the values of which the wave is calculated
+        center_position: position for the center of the wave
+        center_velocity: velocity for the center of the wave
+        variance: the variance of the gaussian function
+    """
+    factor_1 = 1 / (2 * np.pi * variance)**(1/4)
+    factor_2 = np.exp(-(x_lattice - center_position)**2 / (4 * variance))
+    factor_3 = np.exp(1j * x_lattice * center_velocity)
+    wave = factor_1 * factor_2 * factor_3
+    return wave
 
 specific_collision = Particle_Collision(gaussian_wave, gaussian_potential)
 specific_collision.animate_collision(10, 1000)
