@@ -1,110 +1,117 @@
 import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
-import scipy.integrate
 import matplotlib.animation as anim
-from matplotlib import rc
+import scipy.integrate
+from collections.abc import Callable
 plt.rc("animation", html="jshtml")
 
-def banded_mv(A, x):
-    y = A[1,:] * x
-    y[:-1] += A[0,1:] * x[1:]
-    y[1:]  += A[2,:-1] * x[:-1]
-    return y
+class Particle_Collision():
+    def __init__(
+            self, wave: type[Callable], barrier: Callable, matrix_length: int = 3000,
+            matrix_bounds: float = 150, mass: float = 1, dt: float = 0.1
+    ):
+        self.matrix_length = matrix_length
+        self.matrix_bounds = matrix_bounds
+        self.mass = mass
+        self.dt = dt
+        self.x_lattice = np.linspace(-matrix_bounds, matrix_bounds, matrix_length)
+        self.delta_x = (self.x_lattice[-1] - self.x_lattice[0]) / self.matrix_length
+        self.wave = wave(self.x_lattice)
+        self.barrier = barrier(self.x_lattice)
 
-def potential(x: np.ndarray, V_0: float = 10, standard_deviation: float = 1, x_0: float = 40) -> np.ndarray:
-    """
-    Calculates the potential in form of a slim Gauss for a wave to collide with.
+    def double_deriv(self) -> np.ndarray:
+        """
+        Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
+        super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
 
-    paramenters:
-        x: the values of which the potential is calculated
-        V_0: the initial value of the potential
-        standard_deviation: how much the function deviates
-        x_0: displacement of the top point along the x-axis in the positive direction
-    """
+        parameters:
+            matrix_length: length of the matrix
+            delta_x: length between x-values
+            mass: mass of the particle
+        """
+        T_matrix = np.zeros((3, self.matrix_length))
 
-    if standard_deviation == 0:
-        raise Exception("The standard deviation cannot be 0")
-    return V_0 * np.exp(-1 * ((x - x_0)**2) / (4 * standard_deviation**2))
+        T_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        T_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        T_diag = np.zeros((1, self.matrix_length)) -2
 
-def construct_T(matrix_length: int, delta_x: float, mass: float) -> np.ndarray:
-    """
-    Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
-    super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
+        T_matrix[0,1:] = T_sub_diag
+        T_matrix[1,:] = T_diag
+        T_matrix[2,:-1] = T_super_diag
 
-    parameters:
-        matrix_length: length of the matrix
-        delta_x: length between x-values
-        mass: mass of the particle
-    """
-    T_matrix = np.zeros((3, matrix_length))
+        T_factor = - 1 / (2* self.mass * self.delta_x**2)
 
-    T_sub_diag = np.zeros((1,matrix_length - 1)) + 1
-    T_super_diag = np.zeros((1,matrix_length - 1)) + 1
-    T_diag = np.zeros((1,matrix_length)) -2
+        T = T_factor * T_matrix
+        return T
 
-    T_matrix[0,1:] = T_sub_diag
-    T_matrix[1,:] = T_diag
-    T_matrix[2,:-1] = T_super_diag
+    def crank_nicholson_matrix(self, n) -> np.ndarray:
+        """
 
-    T_factor = - 1 / (2*mass*delta_x**2)
+        """
+        V = self.barrier
+        T = Particle_Collision.double_deriv(self)
+        H = T
+        H[1,:] += V
+        second_term = (-1)**n * ((1j * self.dt) / 2) * H
+        second_term[1,:] += 1
+        return second_term
 
-    T = T_factor * T_matrix
-    return T
+    def animate_collision(self, frame_space: int = 10, animation_points: int = 1000):
+        def banded_mv(A, x):
+            y = A[1,:] * x
+            y[:-1] += A[0,1:] * x[1:]
+            y[1:]  += A[2,:-1] * x[:-1]
+            return y
 
-def crank_nicholson_matrix(matrix_length: int, x, delta_t, t: float, n: int = 0) -> np.ndarray:
-    """
+        fig1, ani_ax = plt.subplots()
+        psis = [self.wave]
 
-    """
-    delta_x_lattice = x[1] - x[0]
-    V = potential(x)
-    T = construct_T(len(x), delta_x_lattice, mass_electron)
-    H = T
-    H[1,:] += V
-    second_term = (-1)**n * ((1j * delta_t) / 2) * H
-    second_term[1,:] += 1
-    return second_term
+        potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
+        potential_plot = self.barrier * potential_plot_normalize
+        ani_ax.plot(self.x_lattice, potential_plot, color="C3")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2)
 
-def construct_wave(position, variance, central_speed, center_position):
-    factor_1 = 1 / (2*np.pi*variance)**(1/4)
-    factor_2 = np.exp(-(position - center_position)**2 / (4 * variance))
-    factor_3 = np.exp(1j * position * central_speed)
-    wave = factor_1 * factor_2 * factor_3
-    return wave
+        for i in range(animation_points):
+            right_vector = banded_mv(
+                Particle_Collision.crank_nicholson_matrix(self, i), psis[-1]
+            )
+            left_matrix = (
+                Particle_Collision.crank_nicholson_matrix(self, 0)
+            )
+            new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
+            psis.append(new_psi)
 
-mass_electron = 1
-points = 3000
-spread = 4
-variance = spread ** 2
-center_speed = np.sqrt(21)
-center_position = 0
-x_lattice = np.linspace(-150, 150, points)
-dt = 0.1
-wave_0 = construct_wave(x_lattice, variance, center_speed, center_position)
+        def ani_func(index):
+            normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index * frame_space])**2, self.x_lattice))
+            plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
+            line.set_ydata(plot_func)
+            return line,
 
-#fig, ax = plt.subplots(3, 1)
-#ax[0].plot(abs(construct_wave(x_lattice, variance, center_speed, center_position)**2))
+        number_frames = animation_points // frame_space
+        ani = anim.FuncAnimation(fig1, ani_func, frames = number_frames, blit=False)
+        return ani
 
-psis = [wave_0]
-for i in range(1000):
-    right_vector = banded_mv(crank_nicholson_matrix(points, x_lattice, dt, 0, 1), psis[-1])
-    left_matrix = crank_nicholson_matrix(points, x_lattice, dt, 0)
-    new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
-    psis.append(new_psi)
-#ax[1].plot(x_lattice, abs(psis[-1])**2)
-#ax[1].plot(x_lattice, potential(x_lattice)/(max(potential(x_lattice)*20)))
+def gaussian_potential(x_lattice: np.ndarray, height: float = 10, standard_deviation: float = 1, start_position: float = 40) -> np.ndarray:
+        """
+        Calculates the potential in form of a slim Gauss for a wave to collide with.
 
-def ani_func(index):
-    normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index*10])**2, x_lattice))
-    plot_func = normalizing_factor * abs((psis[index*10]))**2
-    line.set_ydata(plot_func)
-    return line,
+        paramenters:
+            x_lattice: the values of which the potential is calculated
+            V_0: the initial value of the potential
+            standard_deviation: how much the function deviates
+            start_position: displacement of the top point along the x-axis in the positive direction
+        """
+        if standard_deviation == 0:
+            raise Exception("The standard deviation cannot be 0")
+        return height * np.exp(-1 * ((x_lattice - start_position)**2) / (4 * standard_deviation**2))
 
-fig1, ani_ax = plt.subplots()
-potential_plot_normalize = 1 / max(potential(x_lattice)) * max(abs(psis[0])**2) * 1.2
-potential_plot = potential(x_lattice) * potential_plot_normalize
-ani_ax.plot(x_lattice, potential_plot, color="C3")
-line, = ani_ax.plot(x_lattice, abs(psis[0])**2)
+def gaussian_wave(x_lattice: np.ndarray, center_position: float = 0, center_velocity: float = 4, variance: float = 2):
+        factor_1 = 1 / (2 * np.pi * variance)**(1/4)
+        factor_2 = np.exp(-(x_lattice - center_position)**2 / (4 * variance))
+        factor_3 = np.exp(1j * x_lattice * center_velocity)
+        wave = factor_1 * factor_2 * factor_3
+        return wave
 
-ani = anim.FuncAnimation(fig1, ani_func, frames=100, blit=False)
-ani
+specific_collision = Particle_Collision(gaussian_wave, gaussian_potential)
+specific_collision.animate_collision(10, 1000)
