@@ -62,9 +62,9 @@ class ParticleCollision:
         kinetic = ParticleCollision.double_deriv(self)
         hamiltonian = kinetic
         hamiltonian[1,:] += potential.copy()
-        second_term = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
-        second_term[1,:] += 1
-        return second_term
+        final_matrix = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
+        final_matrix[1,:] += 1
+        return final_matrix
 
     def animate_collision(self, frame_space: int = 10, animation_points: int = 1000):
         """
