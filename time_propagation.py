@@ -48,7 +48,7 @@ class ParticleCollision:
         kinetic_matrix[2,:-1] = kinetic_super_diag
 
         kinetic_factor = - 1 / (2* self.mass * self.delta_x**2)
-        
+
         return kinetic_factor * kinetic_matrix
 
     def crank_nicholson_matrix(self, n) -> np.ndarray:
@@ -74,13 +74,20 @@ class ParticleCollision:
             frame_space: chooses every n'th point to show in animation, where n is the value assigned
             animation_points: amount of points to animate
         """
-        def banded_mv(A, x):
+        def banded_mv(A: np.ndarray, x: np.ndarray) -> np.ndarray:
+            """
+            A tool to solve the matrix-vector multiplication A * y = x for y.
+
+            parameters:
+                A: matrix
+                x: vector
+            """
             y = A[1,:] * x
             y[:-1] += A[0,1:] * x[1:]
             y[1:]  += A[2,:-1] * x[:-1]
             return y
 
-        fig1, ani_ax = plt.subplots()
+        fig, ani_ax = plt.subplots()
         ani_ax.grid()
         ani_ax.set_xlabel("Position")
         ani_ax.set_ylabel("Probability")
@@ -90,7 +97,7 @@ class ParticleCollision:
         potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
         ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
-        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function", color = "C0")
         ani_ax.legend()
 
         for i in range(animation_points):
@@ -104,13 +111,16 @@ class ParticleCollision:
             psis.append(new_psi)
 
         def ani_func(index):
+            """
+            A part to help animate the collision.
+            """
             normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index * frame_space])**2, self.x_lattice))
             plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
             line.set_ydata(plot_func)
             return line,
 
         number_frames = animation_points // frame_space
-        ani = anim.FuncAnimation(fig1, ani_func, frames = number_frames, blit=False)
+        ani = anim.FuncAnimation(fig, ani_func, frames = number_frames, blit=False)
         return ani
 
 def gaussian_potential(
