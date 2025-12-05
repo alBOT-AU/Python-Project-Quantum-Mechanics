@@ -35,7 +35,20 @@ class ParticleCollision:
     def __str__(self):
         return (f"Parameters:\n Matrix length = {self.matrix_length} \n Matrix bounds = {self.matrix_bounds}"
                 f"\n Mass = {self.mass} \n dt = {self.dt}")
-    
+
+    def banded_mv(A: np.ndarray, x: np.ndarray) -> np.ndarray:
+        """
+        A tool to solve the matrix-vector multiplication A * y = x for y.
+
+        parameters:
+            A: matrix
+            x: vector
+        """
+        y = A[1,:] * x
+        y[:-1] += A[0,1:] * x[1:]
+        y[1:]  += A[2,:-1] * x[:-1]
+        return y
+
     def double_deriv(self) -> np.ndarray:
         """
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
@@ -64,11 +77,11 @@ class ParticleCollision:
         """
         potential = self.barrier
         kinetic = ParticleCollision.double_deriv(self)
-        hamiltonian = kinetic.copy()
-        hamiltonian[1,:] += potential
-        final_matrix = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
-        final_matrix[1,:] += 1
-        return final_matrix
+        hamiltonian = kinetic
+        hamiltonian[1,:] += potential.copy()
+        second_term = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
+        second_term[1,:] += 1
+        return second_term
 
     def animate_collision(self, frame_space: int = 10, animation_points: int = 1000):
         """
@@ -78,19 +91,6 @@ class ParticleCollision:
             frame_space: chooses every n'th point to show in animation, where n is the value assigned
             animation_points: amount of points to animate
         """
-        def banded_mv(A: np.ndarray, x: np.ndarray) -> np.ndarray:
-            """
-            A tool to solve the matrix-vector multiplication A * y = x for y.
-
-            parameters:
-                A: matrix
-                x: vector
-            """
-            y = A[1,:] * x
-            y[:-1] += A[0,1:] * x[1:]
-            y[1:]  += A[2,:-1] * x[:-1]
-            return y
-
         fig, ani_ax = plt.subplots()
         ani_ax.grid()
         ani_ax.set_xlabel("Position")
@@ -101,11 +101,11 @@ class ParticleCollision:
         potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
         ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
-        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function", color = "C0")
         ani_ax.legend()
 
         for i in range(animation_points):
-            right_vector = banded_mv(
+            right_vector = ParticleCollision.banded_mv(
                 ParticleCollision.crank_nicholson_matrix(self, i), psis[-1]
             )
             left_matrix = (
@@ -118,8 +118,7 @@ class ParticleCollision:
             """
             A part to help animate the collision.
             """
-            abs_square = (scipy.integrate.simpson(abs(psis[index * frame_space])**2
-            normalizing_factor = 1 / abs_square, self.x_lattice))
+            normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index * frame_space])**2, self.x_lattice))
             plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
             line.set_ydata(plot_func)
             return line,
@@ -128,8 +127,19 @@ class ParticleCollision:
         ani = anim.FuncAnimation(fig, ani_func, frames = number_frames, blit=False)
         return ani
 
+    def tunneling_chance(self) -> float:
+        psis = [self.wave]
+        for i in range(1000):
+            right_vector = ParticleCollision.banded_mv(ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1])
+            left_matrix = ParticleCollision.crank_nicholson_matrix(self, n = 0)
+            new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
+            psis.append(new_psi)
+        relative_tunneling_chance = scipy.integrate.simpson(abs(psis[1000][1620:])**2, self.x_lattice[1620:])
+        real_tunneling_chance = relative_tunneling_chance / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
+        return real_tunneling_chance
+
 def gaussian_potential(
-        x_lattice: np.ndarray, height: float = 10, standard_deviation: float = 1, start_position: float = 40
+        x_lattice: np.ndarray, height: float = 10, standard_deviation: float = 1, start_position: float = 30
 ) -> np.ndarray:
         """
         Calculates the potential in form of a slim Gauss for a wave to collide with.
@@ -162,5 +172,19 @@ def gaussian_wave(
     wave = factor_1 * factor_2 * factor_3
     return wave
 
+speed_chances = []
+for speed in range(21, 71):
+    specific_gaussian_wave = lambda x_lattice: gaussian_wave(x_lattice, center_velocity=speed/10)
+    wave_0 = ParticleCollision(specific_gaussian_wave, gaussian_potential, matrix_length = 3000, matrix_bounds = 500, dt = 0.1)
+    speed_chances.append(wave_0.tunneling_chance())
+
+plot_over_tunneling_chances, ax = plt.subplots()
+ax.grid(True)
+ax.set_xlabel("Linear energy relation of most probable energy")
+ax.set_ylabel("Chance of tunneling")
+ax.plot((np.linspace(2, 7, 50))**2/2, speed_chances)
+ax.set_title("Chance of tunneling for different gaussian wave functions")
+
 specific_collision = ParticleCollision(gaussian_wave, gaussian_potential, dt = 0.1)
+print(specific_collision)
 specific_collision.animate_collision(5, 1000)
