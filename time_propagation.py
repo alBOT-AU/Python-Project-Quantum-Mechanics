@@ -140,7 +140,9 @@ class ParticleCollision:
             left_matrix = ParticleCollision.crank_nicholson_matrix(self, n = 0)
             new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
             psis.append(new_psi)
-        relative_tunneling_chance = scipy.integrate.simpson(abs(psis[1000][1620:])**2, self.x_lattice[1620:])
+        relative_tunneling_chance = scipy.integrate.simpson(
+            abs(psis[1000][1620:])**2, self.x_lattice[1620:]
+        )
         normalizing_factor = 1 / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
         real_tunneling_chance = relative_tunneling_chance * normalizing_factor
         return real_tunneling_chance
