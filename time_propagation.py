@@ -32,6 +32,10 @@ class ParticleCollision:
         self.wave = wave(self.x_lattice)
         self.barrier = barrier(self.x_lattice)
 
+    def __str__(self):
+        return (f"Parameters:\n Matrix length = {self.matrix_length} \n Matrix bounds = {self.matrix_bounds}"
+                f"\n Mass = {self.mass} \n dt = {self.dt}")
+    
     def double_deriv(self) -> np.ndarray:
         """
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
