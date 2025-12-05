@@ -21,37 +21,36 @@ class Eigenvalues_Harmonic_Oscillator():
         self.x_lattice = np.linspace(-boundaries, boundaries, self.matrix_length)
         self.delta_x = (self.x_lattice[-1] - self.x_lattice[0]) / self.matrix_length
 
-    def construct_double_deriv(self) -> np.ndarray:
+    def double_deriv(self) -> np.ndarray:
         """
         Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
         """
-        T_matrix = np.zeros((3, self.matrix_length))
+        kinetic_matrix = np.zeros((3, self.matrix_length))
 
-        T_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
-        T_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
-        T_diag = np.zeros((1, self.matrix_length)) -2
+        kinetic_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        kinetic_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
+        kinetic_diag = np.zeros((1, self.matrix_length)) -2
 
-        T_matrix[0,1:] = T_sub_diag
-        T_matrix[1,:] = T_diag
-        T_matrix[2,:-1] = T_super_diag
+        kinetic_matrix[0,1:] = kinetic_sub_diag
+        kinetic_matrix[1,:] = kinetic_diag
+        kinetic_matrix[2,:-1] = kinetic_super_diag
 
-        T_factor = - 1 / (2* self.mass * self.delta_x**2)
+        kinetic_factor = - 1 / (2* self.mass * self.delta_x**2)
 
-        T = T_factor * T_matrix
-        return T
+        return kinetic_factor * kinetic_matrix
 
-    def construct_potential(self):
+    def potential(self):
         """
         Constructs the V matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
         super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
         """
         omega_square = self.angular_frequency**2
         x_square = self.x_lattice**2
-        V_diag = omega_square * x_square / 2
-        V =  np.zeros((3, self.matrix_length))
-        V[1,:] = V_diag
-        return V
+        potential_diag = omega_square * x_square / 2
+        potential =  np.zeros((3, self.matrix_length))
+        potential[1,:] = potential_diag
+        return potential
 
     def get_normalized_eigenfunction(self, n: int)->None:
         """
@@ -60,8 +59,8 @@ class Eigenvalues_Harmonic_Oscillator():
         parameters:
             n: eigenfunction number
         """
-        double_deriv = Eigenvalues_Harmonic_Oscillator.construct_double_deriv(self)
-        potential = Eigenvalues_Harmonic_Oscillator.construct_potential(self)
+        double_deriv = Eigenvalues_Harmonic_Oscillator.double_deriv(self)
+        potential = Eigenvalues_Harmonic_Oscillator.potential(self)
         hamiltonian = double_deriv + potential
         
         eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(hamiltonian[1,:], hamiltonian[0, 1:])
