@@ -3,7 +3,7 @@ import scipy.linalg
 import matplotlib.pyplot as plt
 import scipy.integrate
 
-class Eigenvalues_Harmonic_Oscillator():
+class EigenvaluesHarmonicOscillator():
     def __init__(self, matrix_length: int = 2000, boundaries: float = 15, 
                  angular_frequency: float = 2, mass: float = 1):
         """
@@ -23,8 +23,9 @@ class Eigenvalues_Harmonic_Oscillator():
 
     def double_deriv(self) -> np.ndarray:
         """
-        Constructs the T matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
-        super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
+        Constructs the T matrix, which consists of a tri-diagonal matrix. 
+        All other points than the diagonal, super- and sub-diagonal have 
+        the value 0, so only those diagonals are represented as a matrix.
         """
         kinetic_matrix = np.zeros((3, self.matrix_length))
 
@@ -42,8 +43,9 @@ class Eigenvalues_Harmonic_Oscillator():
 
     def potential(self):
         """
-        Constructs the V matrix, which consists of a tri-diagonal matrix. All other points than the diagonal,
-        super- and sub-diagonal have the value 0, so only those diagonals are represented as a matrix.
+        Constructs the V matrix, which consists of a tri-diagonal matrix. 
+        All other points than the diagonal, super- and sub-diagonal have 
+        the value 0, so only those diagonals are represented as a matrix.
         """
         omega_square = self.angular_frequency**2
         x_square = self.x_lattice**2
@@ -59,8 +61,8 @@ class Eigenvalues_Harmonic_Oscillator():
         parameters:
             n: eigenfunction number
         """
-        double_deriv = Eigenvalues_Harmonic_Oscillator.double_deriv(self)
-        potential = Eigenvalues_Harmonic_Oscillator.potential(self)
+        double_deriv = EigenvaluesHarmonicOscillator.double_deriv(self)
+        potential = EigenvaluesHarmonicOscillator.potential(self)
         hamiltonian = double_deriv + potential
         
         eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(hamiltonian[1,:], hamiltonian[0, 1:])
@@ -69,7 +71,7 @@ class Eigenvalues_Harmonic_Oscillator():
 
 fig, ax = plt.subplots(10, 1, sharex=True, figsize=(7,10))
 fig.tight_layout()
-specific_case = Eigenvalues_Harmonic_Oscillator()
+specific_case = EigenvaluesHarmonicOscillator()
 ax[9].set_xlabel("position")
 ax[4].set_ylabel(r"|$\psi(x)^2$|")
 ax[0].set_title("Plots af forskellige egenvektorer for den harmoniske oscillator")
