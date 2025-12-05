@@ -101,7 +101,7 @@ class ParticleCollision:
         potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
         ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
-        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function", color = "C0")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
         ani_ax.legend()
 
         for i in range(animation_points):
