@@ -118,7 +118,8 @@ class ParticleCollision:
             """
             A part to help animate the collision.
             """
-            normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index * frame_space])**2, self.x_lattice))
+            abs_square = (scipy.integrate.simpson(abs(psis[index * frame_space])**2
+            normalizing_factor = 1 / abs_square, self.x_lattice))
             plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
             line.set_ydata(plot_func)
             return line,
