@@ -64,8 +64,8 @@ class ParticleCollision:
         """
         potential = self.barrier
         kinetic = ParticleCollision.double_deriv(self)
-        hamiltonian = kinetic
-        hamiltonian[1,:] += potential.copy()
+        hamiltonian = kinetic.copy()
+        hamiltonian[1,:] += potential
         final_matrix = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
         final_matrix[1,:] += 1
         return final_matrix
