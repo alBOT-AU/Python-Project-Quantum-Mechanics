@@ -118,7 +118,7 @@ class ParticleCollision:
             """
             A part to help animate the collision.
             """
-            abs_quared = abs(psis[index * frame_space])**2
+            abs_squared = abs(psis[index * frame_space])**2
             normalizing_factor = 1 / (scipy.integrate.simpson(abs_squared, self.x_lattice))
             plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
             line.set_ydata(plot_func)
@@ -128,11 +128,15 @@ class ParticleCollision:
         ani = anim.FuncAnimation(fig, ani_func, frames = number_frames, blit=False)
         return ani
 
-    def tunneling_chance(self) -> float:
+    def tunneling_chance(self, x: int) -> float:
         """
-        Calculates the chance of quantum tunneling. Assumes that the barrier is at a certain position.
+        Calculates the chance of quantum tunneling from position x and towards the right.
+        
+        parameters:
+            x: position to integrate from
         """
         psis = [self.wave]
+        index = (x + self.matrix_bounds) * self.matrix_length // (2 * self.matrix_bounds)
         for i in range(1000):
             right_vector = ParticleCollision.banded_mv(
                 ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1]
@@ -141,7 +145,7 @@ class ParticleCollision:
             new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
             psis.append(new_psi)
         relative_tunneling_chance = scipy.integrate.simpson(
-            abs(psis[1000][1620:])**2, self.x_lattice[1620:]
+            abs(psis[1000][index:])**2, self.x_lattice[index:]
         )
         normalizing_factor = 1 / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
         real_tunneling_chance = relative_tunneling_chance * normalizing_factor
@@ -164,7 +168,8 @@ def gaussian_potential(
         return height * np.exp(-1 * ((x_lattice - start_position)**2) / (4 * standard_deviation**2))
 
 def gaussian_wave(
-        x_lattice: np.ndarray, center_position: float = 0, center_velocity: float = 4, variance: float = 2
+        x_lattice: np.ndarray, center_position: float = 0, 
+        center_velocity: float = 4, variance: float = 2
 ):
     """
     Creates a wave with the form of a gaussian function.
@@ -185,9 +190,9 @@ speed_chances = []
 for speed in range(21, 71):
     specific_gaussian_wave = lambda x_lattice: gaussian_wave(x_lattice, center_velocity=speed/10)
     wave_0 = ParticleCollision(
-        specific_gaussian_wave, gaussian_potential, matrix_length = 3000, matrix_bounds = 500, dt = 0.1
+        specific_gaussian_wave, gaussian_potential, matrix_bounds = 500
     )
-    speed_chances.append(wave_0.tunneling_chance())
+    speed_chances.append(wave_0.tunneling_chance(30))
 
 plot_over_tunneling_chances, ax = plt.subplots()
 ax.grid(True)
