@@ -128,6 +128,9 @@ class ParticleCollision:
         return ani
 
     def tunneling_chance(self) -> float:
+        """
+        Calculates the chance of quantum tunneling. Assumes that the barrier is at a certain position.
+        """
         psis = [self.wave]
         for i in range(1000):
             right_vector = ParticleCollision.banded_mv(ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1])
