@@ -101,7 +101,7 @@ class ParticleCollision:
         potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
         ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
-        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function", color = "C0")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
         ani_ax.legend()
 
         for i in range(animation_points):
@@ -118,7 +118,8 @@ class ParticleCollision:
             """
             A part to help animate the collision.
             """
-            normalizing_factor = 1 / (scipy.integrate.simpson(abs(psis[index * frame_space])**2, self.x_lattice))
+            abs_quared = abs(psis[index * frame_space])**2
+            normalizing_factor = 1 / (scipy.integrate.simpson(abs_squared, self.x_lattice))
             plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
             line.set_ydata(plot_func)
             return line,
@@ -133,12 +134,15 @@ class ParticleCollision:
         """
         psis = [self.wave]
         for i in range(1000):
-            right_vector = ParticleCollision.banded_mv(ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1])
+            right_vector = ParticleCollision.banded_mv(
+                ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1]
+            )
             left_matrix = ParticleCollision.crank_nicholson_matrix(self, n = 0)
             new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
             psis.append(new_psi)
         relative_tunneling_chance = scipy.integrate.simpson(abs(psis[1000][1620:])**2, self.x_lattice[1620:])
-        real_tunneling_chance = relative_tunneling_chance / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
+        normalizing_factor = 1 / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
+        real_tunneling_chance = relative_tunneling_chance * normalizing_factor
         return real_tunneling_chance
 
 def gaussian_potential(
@@ -178,7 +182,9 @@ def gaussian_wave(
 speed_chances = []
 for speed in range(21, 71):
     specific_gaussian_wave = lambda x_lattice: gaussian_wave(x_lattice, center_velocity=speed/10)
-    wave_0 = ParticleCollision(specific_gaussian_wave, gaussian_potential, matrix_length = 3000, matrix_bounds = 500, dt = 0.1)
+    wave_0 = ParticleCollision(
+        specific_gaussian_wave, gaussian_potential, matrix_length = 3000, matrix_bounds = 500, dt = 0.1
+    )
     speed_chances.append(wave_0.tunneling_chance())
 
 plot_over_tunneling_chances, ax = plt.subplots()
