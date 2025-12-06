@@ -67,14 +67,17 @@ class EigenvaluesHarmonicOscillator():
         
         eigvals, eigvecs = scipy.linalg.eigh_tridiagonal(hamiltonian[1,:], hamiltonian[0, 1:])
         normalizing_factor = 1 / (scipy.integrate.simpson(abs(eigvecs[:, n])**2, self.x_lattice))
-        return abs(eigvecs[:, n])**2*normalizing_factor
+        return abs(eigvecs[:, n])**2*normalizing_factor, eigvals
 
 fig, ax = plt.subplots(10, 1, sharex=True, figsize=(7,10))
 fig.tight_layout()
 specific_case = EigenvaluesHarmonicOscillator()
 ax[9].set_xlabel("position")
 ax[4].set_ylabel(r"|$\psi(x)^2$|")
-ax[0].set_title("Plots af forskellige egenvektorer for den harmoniske oscillator")
+ax[0].set_title("Plots of different eigenvectors for the harmonic oscillator")
 for i in range(10):
-    ax[i].plot(specific_case.x_lattice, specific_case.get_normalized_eigenfunction(i))
+    normalized_eigenfunction, eigenvalues = specific_case.get_normalized_eigenfunction(i)
+    ax[i].plot(specific_case.x_lattice, normalized_eigenfunction)
     ax[i].set_yticks([0,0.5,1])
+print(eigenvalues[:10])
+plt.show()
