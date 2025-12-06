@@ -136,6 +136,7 @@ class ParticleCollision:
 
         parameters:
             x: position to integrate from
+            propagation_time: amount of time steps to propagate the time
         """
         psis = [self.wave]
         index = (x + self.matrix_bounds) * self.matrix_length // (2 * self.matrix_bounds)
