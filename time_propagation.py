@@ -208,5 +208,4 @@ ax.plot((np.linspace(2, 7, 50)) ** 2 / 2, speed_chances)
 ax.set_title("Chance of tunneling for different gaussian wave functions")
 
 specific_collision = ParticleCollision(gaussian_wave, gaussian_potential, dt = 0.01)
-plt.show()
 specific_collision.animate_collision(5, 1000)
