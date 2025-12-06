@@ -59,7 +59,7 @@ class EigenvaluesHarmonicOscillator():
         Calculates the normalized eigenfunction for the n'th eigenvalue
 
         parameters:
-            n: eigenfunction number
+            n: eigenfunction and eigenvalue number
         """
         double_deriv = EigenvaluesHarmonicOscillator.double_deriv(self)
         potential = EigenvaluesHarmonicOscillator.potential(self)
