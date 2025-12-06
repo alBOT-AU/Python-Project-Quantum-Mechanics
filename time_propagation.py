@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import scipy.integrate
 from collections.abc import Callable
+
 plt.rc("animation", html="jshtml")
+
 
 class ParticleCollision:
     def __init__(
@@ -44,9 +46,9 @@ class ParticleCollision:
             A: matrix
             x: vector
         """
-        y = A[1,:] * x
-        y[:-1] += A[0,1:] * x[1:]
-        y[1:]  += A[2,:-1] * x[:-1]
+        y = A[1, :] * x
+        y[:-1] += A[0, 1:] * x[1:]
+        y[1:] += A[2, :-1] * x[:-1]
         return y
 
     def double_deriv(self) -> np.ndarray:
@@ -58,13 +60,13 @@ class ParticleCollision:
 
         kinetic_sub_diag = np.zeros((1, self.matrix_length - 1)) + 1
         kinetic_super_diag = np.zeros((1, self.matrix_length - 1)) + 1
-        kinetic_diag = np.zeros((1, self.matrix_length)) -2
+        kinetic_diag = np.zeros((1, self.matrix_length)) - 2
 
-        kinetic_matrix[0,1:] = kinetic_sub_diag
-        kinetic_matrix[1,:] = kinetic_diag
-        kinetic_matrix[2,:-1] = kinetic_super_diag
+        kinetic_matrix[0, 1:] = kinetic_sub_diag
+        kinetic_matrix[1, :] = kinetic_diag
+        kinetic_matrix[2, :-1] = kinetic_super_diag
 
-        kinetic_factor = - 1 / (2* self.mass * self.delta_x**2)
+        kinetic_factor = - 1 / (2 * self.mass * self.delta_x ** 2)
 
         return kinetic_factor * kinetic_matrix
 
@@ -78,9 +80,9 @@ class ParticleCollision:
         potential = self.barrier
         kinetic = ParticleCollision.double_deriv(self)
         hamiltonian = kinetic
-        hamiltonian[1,:] += potential.copy()
-        complete_matrix = (-1)**n * ((1j * self.dt) / 2) * hamiltonian
-        complete_matrix[1,:] += 1
+        hamiltonian[1, :] += potential.copy()
+        complete_matrix = (-1) ** n * ((1j * self.dt) / 2) * hamiltonian
+        complete_matrix[1, :] += 1
         return complete_matrix
 
     def animate_collision(self, frame_space: int = 10, animation_points: int = 1000):
@@ -98,10 +100,10 @@ class ParticleCollision:
         ani_ax.set_title("Normalized wave function and linear relation to barrier")
         psis = [self.wave]
 
-        potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0])**2) * 1.2
+        potential_plot_normalize = 1 / max(self.barrier) * max(abs(psis[0]) ** 2) * 1.2
         potential_plot = self.barrier * potential_plot_normalize
-        ani_ax.plot(self.x_lattice, potential_plot, color="C3", label = "Barrier")
-        line, = ani_ax.plot(self.x_lattice, abs(psis[0])**2, label="Normalized wave function")
+        ani_ax.plot(self.x_lattice, potential_plot, color="C3", label="Barrier")
+        line, = ani_ax.plot(self.x_lattice, abs(psis[0]) ** 2, label="Normalized wave function")
         ani_ax.legend()
 
         for i in range(animation_points):
@@ -118,57 +120,59 @@ class ParticleCollision:
             """
             A part to help animate the collision.
             """
-            abs_squared = abs(psis[index * frame_space])**2
+            abs_squared = abs(psis[index * frame_space]) ** 2
             normalizing_factor = 1 / (scipy.integrate.simpson(abs_squared, self.x_lattice))
-            plot_func = normalizing_factor * abs((psis[index * frame_space]))**2
+            plot_func = normalizing_factor * abs((psis[index * frame_space])) ** 2
             line.set_ydata(plot_func)
             return line,
 
         number_frames = animation_points // frame_space
-        ani = anim.FuncAnimation(fig, ani_func, frames = number_frames, blit=False)
+        ani = anim.FuncAnimation(fig, ani_func, frames=number_frames, blit=False)
         return ani
 
-    def tunneling_chance(self, x: int) -> float:
+    def tunneling_chance(self, x: int = 30, propagation_time: int = 1000) -> float:
         """
         Calculates the chance of quantum tunneling from position x and towards the right.
-        
+
         parameters:
             x: position to integrate from
         """
         psis = [self.wave]
         index = (x + self.matrix_bounds) * self.matrix_length // (2 * self.matrix_bounds)
-        for i in range(1000):
+        for i in range(propagation_time):
             right_vector = ParticleCollision.banded_mv(
-                ParticleCollision.crank_nicholson_matrix(self, n = 1), psis[-1]
+                ParticleCollision.crank_nicholson_matrix(self, n=1), psis[-1]
             )
-            left_matrix = ParticleCollision.crank_nicholson_matrix(self, n = 0)
+            left_matrix = ParticleCollision.crank_nicholson_matrix(self, n=0)
             new_psi = scipy.linalg.solve_banded((1, 1), left_matrix, right_vector)
             psis.append(new_psi)
         relative_tunneling_chance = scipy.integrate.simpson(
-            abs(psis[1000][index:])**2, self.x_lattice[index:]
+            abs(psis[-1][index:]) ** 2, self.x_lattice[index:]
         )
-        normalizing_factor = 1 / scipy.integrate.simpson(abs(psis[1000])**2, self.x_lattice)
+        normalizing_factor = 1 / scipy.integrate.simpson(abs(psis[-1]) ** 2, self.x_lattice)
         real_tunneling_chance = relative_tunneling_chance * normalizing_factor
         return real_tunneling_chance
+
 
 def gaussian_potential(
         x_lattice: np.ndarray, height: float = 10, standard_deviation: float = 1, start_position: float = 30
 ) -> np.ndarray:
-        """
-        Calculates the potential in form of a slim Gauss for a wave to collide with.
+    """
+    Calculates the potential in form of a slim Gauss for a wave to collide with.
 
-        parameters:
-            x_lattice: the values of which the potential is calculated
-            height: height of the potential
-            standard_deviation: how much the function deviates
-            start_position: displacement of the top point along the x-axis in the positive direction
-        """
-        if standard_deviation == 0:
-            raise Exception("The standard deviation cannot be 0")
-        return height * np.exp(-1 * ((x_lattice - start_position)**2) / (4 * standard_deviation**2))
+    parameters:
+        x_lattice: the values of which the potential is calculated
+        height: height of the potential
+        standard_deviation: how much the function deviates
+        start_position: displacement of the top point along the x-axis in the positive direction
+    """
+    if standard_deviation == 0:
+        raise Exception("The standard deviation cannot be 0")
+    return height * np.exp(-1 * ((x_lattice - start_position) ** 2) / (4 * standard_deviation ** 2))
+
 
 def gaussian_wave(
-        x_lattice: np.ndarray, center_position: float = 0, 
+        x_lattice: np.ndarray, center_position: float = 0,
         center_velocity: float = 4, variance: float = 2
 ):
     """
@@ -180,17 +184,18 @@ def gaussian_wave(
         center_velocity: velocity for the center of the wave
         variance: the variance of the gaussian function
     """
-    factor_1 = 1 / (2 * np.pi * variance)**(1/4)
-    factor_2 = np.exp(-(x_lattice - center_position)**2 / (4 * variance))
+    factor_1 = 1 / (2 * np.pi * variance) ** (1 / 4)
+    factor_2 = np.exp(-(x_lattice - center_position) ** 2 / (4 * variance))
     factor_3 = np.exp(1j * x_lattice * center_velocity)
     wave = factor_1 * factor_2 * factor_3
     return wave
 
+
 speed_chances = []
 for speed in range(21, 71):
-    specific_gaussian_wave = lambda x_lattice: gaussian_wave(x_lattice, center_velocity=speed/10)
+    specific_gaussian_wave = lambda x_lattice: gaussian_wave(x_lattice, center_velocity=speed / 10)
     wave_0 = ParticleCollision(
-        specific_gaussian_wave, gaussian_potential, matrix_bounds = 500
+        specific_gaussian_wave, gaussian_potential, matrix_bounds=500
     )
     speed_chances.append(wave_0.tunneling_chance(30))
 
@@ -198,9 +203,9 @@ plot_over_tunneling_chances, ax = plt.subplots()
 ax.grid(True)
 ax.set_xlabel("Linear energy relation of most probable energy")
 ax.set_ylabel("Chance of tunneling")
-ax.plot((np.linspace(2, 7, 50))**2/2, speed_chances)
+ax.plot((np.linspace(2, 7, 50)) ** 2 / 2, speed_chances)
 ax.set_title("Chance of tunneling for different gaussian wave functions")
 
-specific_collision = ParticleCollision(gaussian_wave, gaussian_potential, dt = 0.1)
-print(specific_collision)
+specific_collision = ParticleCollision(gaussian_wave, gaussian_potential, dt = 0.01)
+plt.show()
 specific_collision.animate_collision(5, 1000)
